@@ -28,42 +28,10 @@ def linuxPip(dists):
 def windowsPip(dists):
     cmd = "C:\python%i%i\scripts\pip install -U " % (sys.version_info.major, sys.version_info.minor)
     for dist_name in dists:
-        cmd = "%s %s" % (cmd, dist_name)
-    print('#',cmd)
-    exit_status = os.system(cmd)
-    print('Exit status: ', os.system(cmd))
-    if exit_status != '0':
-        while exit_status != '0':
-            with open("C:\\Users\\Alexander Riccio\\pip\\pip.log", 'r') as f:
-                print('parsing logfile...')
-                line = ''
-                for aLine in f.readlines():
-                    if 'DistributionNotFound: No distributions at all found for ' in aLine:
-                        line = aLine
-                    #if 'error: Could not find \'' in aLine:
-                        
-            try:
-                endName = line.rfind(' in ')
-                theBadPackage = line[56:endName]
-                
-            except ValueError:
-                print('ValueError!')
-                return
-            if  theBadPackage == '':
-                return
-            cmd = "C:\python%i%i\scripts\pip install -U " % (sys.version_info.major, sys.version_info.minor)
-            for dist_name in dists:
-                if dist_name != theBadPackage:
-                    print(dist_name, ' is not ', theBadPackage)
-                    cmd = "%s %s" % (cmd, dist_name)
-                else:
-                    print('removing bad dist_name "', dist_name, '"')
-                    dists.remove(dist_name)
-
-            print('#',cmd)
-            exit_status = os.system(cmd)
-            print('Exit status: ', os.system(cmd))
-
+        this_cmd = "%s %s" % (cmd, dist_name)
+        print('#',this_cmd)
+        exit_status = os.system(this_cmd)
+        print('Exit status: ', os.system(this_cmd))
 
 def updatePip():
     dists = []
