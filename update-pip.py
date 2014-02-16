@@ -43,15 +43,7 @@ def updatePip():
     dists.insert(0, 'pip')  # let 'pip' be the first
 
     #cmd = "C:\python27\scripts\pip install -U "
-
-    ##for dist_name in dists:
-    ##
-    ##    cmd = "%s %s" %(cmd, dist_name)
-    ##    #print('#', cmd)
-    ##    #os.system(cmd)
-    ##
-    ###os.system(cmd)
-
+    
     if 'linux' in sys.platform:
         linuxPip(dists)
         
@@ -60,15 +52,6 @@ def updatePip():
 
 def main():
     updatePip()    
-    ##for dist_name in dists:
-    ##    if 'linux' in sys.platform:
-    ##        cmd = "sudo pip install {0} -U".format(dist_name)
-    ##        print('#', cmd)
-    ##        os.system(cmd)
-    ##    elif ('win32' or 'win64') in sys.platform:
-    ##        cmd = "C:\python27\scripts\pip install {0} -U".format(dist_name)
-    ##        print('#', cmd)
-    ##        os.system(cmd)
             
 if __name__ == '__main__':
     main()
