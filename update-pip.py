@@ -32,10 +32,12 @@ def windowsPip(dists):
         print('#',this_cmd)
         exit_status = os.system(this_cmd)
         print('Exit status: ', os.system(this_cmd))
+        if exit_status != 0:
+            failed.append((dist_name, exit_status))
 
 def updatePip():
     dists = []
-
+    failed = []
     for dist in pip.get_installed_distributions():
         dists.append(dist.project_name)
 
@@ -49,7 +51,8 @@ def updatePip():
         
     elif ('win32' or 'win64') in sys.platform:    
         windowsPip(dists)
-
+    print(failed)
+    
 def main():
     updatePip()    
             
