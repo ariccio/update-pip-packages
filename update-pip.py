@@ -57,8 +57,12 @@ def windowsPip(dists):
         try:
             exit_status = subprocess.check_output(this_cmd)
         except subprocess.CalledProcessError as aCalledProcessError:
-            print('\tCalledProcessError! ')
-            failed.append((dist_name, aCalledProcessError.cmd, aCalledProcessError.output, aCalledProcessError.returncode))
+            if aCalledProcessError.returncode == 1:
+                #package is already up to date!
+                print("\tPackage %s is already up to date" % dist_name)
+            else:    
+                print('\tCalledProcessError! ')
+                failed.append((dist_name, aCalledProcessError.cmd, aCalledProcessError.output, aCalledProcessError.returncode))
 ##        print('Exit status: ', os.system(this_cmd))
 ##        if exit_status != 0:
 ##            failed.append((dist_name, exit_status))
