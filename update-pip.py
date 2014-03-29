@@ -59,7 +59,7 @@ def windowsPip(dists):
         except subprocess.CalledProcessError as aCalledProcessError:
             if aCalledProcessError.returncode == 1:
                 #package is already up to date!
-                print("\tPackage %s is already up to date" % dist_name)
+                print("\tPackage %s is already up to date!" % dist_name)
             else:    
                 print('\tCalledProcessError! ')
                 failed.append((dist_name, aCalledProcessError.cmd, aCalledProcessError.output, aCalledProcessError.returncode))
