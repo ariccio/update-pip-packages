@@ -68,14 +68,16 @@ def buildQueueOfInstalledPackages():
 
 def installSinglePackage(aPackage):
     '''calls the right function (depending on the current OS) to install a single package. Massive function call overhead!'''
-    try:
-        if 'linux' in sys.platform:
-            return safeLinuxPip(aPackage)
-            
-        elif ('win32' or 'win64') in sys.platform:    
-            return safeWindowsPip(aPackage)
-    except KeyboardInterrupt:
-        sys.exit()
+    if 'linux' in sys.platform:
+        return safeLinuxPip(aPackage)
+        
+    elif ('win32' or 'win64') in sys.platform:    
+        return safeWindowsPip(aPackage)
+
+
+
+
+
 def safeLinuxPip(dist_name):
     failed = []
     cmd = "sudo pip install -U "
@@ -102,6 +104,16 @@ def safeWindowsPip(dist_name):
             print('\tCalledProcessError! ')
             failed.append((dist_name, aCalledProcessError.cmd, aCalledProcessError.output, aCalledProcessError.returncode))
     return failed
+
+
+
+
+
+
+
+
+
+
 
 
     
@@ -148,32 +160,46 @@ def getTroubleMakingPackages():
     return listNames
 
 def updatePip():
-    try:
-        failed = []
-        badPackages = []
-        threads = []
-        dists = getInstalledPackages()
-        print('Got list of %i installed packages! Continue?' % len(dists))
-        if sys.version_info.major > 2:
-            input()
-        else:
-            raw_input()
-    except KeyboardInterrupt:
-        sys.exit()
+    failed = []
+    badPackages = []
+    threads = []
+    dists = getInstalledPackages()
+    print('Got list of %i installed packages! Continue?' % len(dists))
+    if sys.version_info.major > 2:
+        input()
+    else:
+        raw_input()
+##
+##    if 'linux' in sys.platform:
+##        failed = linuxPip(dists)
+##        
+##    elif ('win32' or 'win64') in sys.platform:    
+##        failed = windowsPip(dists)
+##    if len(failed) > 1:
+##        print('---------------------------------------------------')
+##        print('Failures occured while upgrading all packages:')
+##        for dist_name, cmd, output, returncode in failed:
+##            print('Failed upgrade of package: ', dist_name)
+##            print('\tFailing command:         ', cmd)
+##            print('\tOutput of command:       ', output)
+##            print('\tReturn code of command:  ', returncode)
+##        badPackageFileNameDir = os.getcwdu()
+##        badPackageFileName = '%s%s%s' % (badPackageFileNameDir, os.sep, 'pip_update_known_troublemakers')
+##        with open(badPackageFileName, 'a') as f:
+##            for items in failed:
+##                dist_name, _, _2, _3 = items
+##                f.write('%s\n' %(dist_name))
     try:
         queueOfPackagesToUpdate = buildQueueOfInstalledPackages()
         queueOfFailedPackages   = queue.Queue()
         [threads.append(installerThread(queueOfPackagesToUpdate, queueOfFailedPackages)) for _ in range(8)]    
         for thread in threads:
             thread.start()
-        queueOfPackagesToUpdate.join()#else profile will fuck up
     except KeyboardInterrupt:
         sys.exit()
-    queueOfFailedPackages.join()
-    return
 
 def _profile(continuation):
-    prof_file = 'updatePip.prof'
+    prof_file = 'duplicateFileFinder.prof'
     try:
         import cProfile
         import pstats
