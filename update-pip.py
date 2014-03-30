@@ -192,7 +192,11 @@ def updatePip():
     try:
         queueOfPackagesToUpdate = buildQueueOfInstalledPackages()
         queueOfFailedPackages   = queue.Queue()
-        [threads.append(installerThread(queueOfPackagesToUpdate, queueOfFailedPackages)) for _ in range(8)]    
+        if sys.version_info.major == 3 and sys.version_info.minor > 3:
+            numCPUs = os.cpu_count()
+        else:
+            numCPUs = 8
+        [threads.append(installerThread(queueOfPackagesToUpdate, queueOfFailedPackages)) for _ in range(numCPUs)]    
         for thread in threads:
             thread.start()
     except KeyboardInterrupt:
