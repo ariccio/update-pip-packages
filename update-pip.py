@@ -234,8 +234,9 @@ def _profile(continuation):
 def main():
     parser = optparse.OptionParser("usage: %prog [options] target")
     parser.add_option('--profile', action='store_true', dest='profile', default=False, help="for the hackers")
-    (options, args) = parser.parse_args()
-    if options.profile:
+    (values, args) = parser.parse_args()
+    if values.profile:
+        print("ready to profile...")
         _profile(updatePip)
     else:
         updatePip()    
