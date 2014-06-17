@@ -5,9 +5,12 @@ Update all the packages (in alphabetical order)
 that you have installed globally with pip
 (i.e. with `sudo pip install`).
 
-http://pythonadventures.wordpress.com/2013/05/22/update-all-pip-packages/
+Created by:
+    Alexander Riccio (alexander@riccio.com)
 
-Jabba Laci, 2013--2014 (jabba.laci@gmail.com)
+Inspired by:
+    http://pythonadventures.wordpress.com/2013/05/22/update-all-pip-packages/
+    Jabba Laci, 2013--2014 (jabba.laci@gmail.com)
 """
 
 from __future__ import (absolute_import, division, print_function,
@@ -17,7 +20,10 @@ import pip
 import sys
 import subprocess
 import threading
-import optparse
+import argparse
+
+
+PACKAGES_FILE_NAME = 'PackagesToInstallFromOlderVersionOfPython'
 
 try:
     import queue
@@ -25,10 +31,11 @@ except ImportError:
     import Queue as queue
 
 class installerThread(threading.Thread):
-    def __init__(self, queueOfPackagesToUpdate, queueOfFailedPackages):
+    def __init__(self, queueOfPackagesToUpdate, queueOfFailedPackages, command):
         threading.Thread.__init__(self)
         self.__queueOfPackagesToUpdate = queueOfPackagesToUpdate
         self.__queueOfFailedPackages   = queueOfFailedPackages
+        self.__command = command
     def run(self):
         '''Thread begins executing this function on call to aThreadObject.start().'''
         try:
@@ -36,7 +43,7 @@ class installerThread(threading.Thread):
         except queue.Empty:
             return
         while self.__nextPackage:
-            self.__result = installSinglePackage(self.__nextPackage)
+            self.__result = installSinglePackage(self.__nextPackage, self.__command)
             if self.__result != 0:
                 self.__queueOfFailedPackages.put(self.__result)
             try:
@@ -66,21 +73,64 @@ def buildQueueOfInstalledPackages():
         distQueue.put(dist)
     return distQueue
 
-def installSinglePackage(aPackage):
+def buildQueueOfInstalledPackagesFromList(packageList):
+    distQueue = queue.Queue()
+    for dist in packageList:
+        distQueue.put(dist)
+    return distQueue
+
+def installSinglePackage(aPackage, command):
     '''calls the right function (depending on the current OS) to install a single package. Massive function call overhead!'''
     if 'linux' in sys.platform:
-        return safeLinuxPip(aPackage)
+        return safeLinuxPip(aPackage, command)
         
     elif ('win32' or 'win64') in sys.platform:    
-        return safeWindowsPip(aPackage)
+        return safeWindowsPip(aPackage, command)
 
+def readPackagesFromFile():
+    packages = []
+    threads = []
+    queueOfFailedPackages   = queue.Queue()
+    with open(PACKAGES_FILE_NAME, 'r') as f:
+        for line in f:
+            packages.append(line)
+    queueOfPackagesToUpdate = buildQueueOfInstalledPackagesFromList(packages)
+    try:
+        if sys.version_info.major == 3 and sys.version_info.minor > 3:
+            numCPUs = os.cpu_count()
+        else:
+            print("you're using an out-of-date version of python! Please upgrade. I'll set the number of threads to 8, as I can't query the cpu_count")
+            numCPUs = 8
+        [threads.append(installerThread(queueOfPackagesToUpdate, queueOfFailedPackages, "install ")) for _ in range(numCPUs)]    
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        os.remove(PACKAGES_FILE_NAME)
+    except KeyboardInterrupt:
+        sys.exit()
+    
 
+def writePackagesToFile( optionalOpt=False):
+    packages = getInstalledPackages()
+    if not optionalOpt:
+        try:
+            try:
+                with open(PACKAGES_FILE_NAME, 'x') as f:
+                    for package in packages:
+                        f.write("%s\n" %package)
+            except FileNotFoundError:
+                print("Is %s already in %s? Try deleting it first." % (PACKAGES_FILE_NAME, os.getcwd()))
+        except NameError:
+            writePackagesToFile(True)#python 27 hack
+    else:
+        with open(PACKAGES_FILE_NAME, 'a') as f:
+            for package in packages:
+                f.write("%s\n" %package)
 
-
-
-def safeLinuxPip(dist_name):
+def safeLinuxPip(dist_name, command):
     failed = []
-    cmd = "sudo pip install -U "
+    cmd = "sudo pip %s" % command
     cmd = "%s %s" % (cmd, dist_name)
     print(cmd)
     try:
@@ -89,9 +139,9 @@ def safeLinuxPip(dist_name):
         print('\tCalledProcessError! ', aCalledProcessError.cmd, aCalledProcessError.output, aCalledProcessError.returncode)
     return failed
 
-def safeWindowsPip(dist_name):
+def safeWindowsPip(dist_name, command):
     failed = []
-    cmd = "C:\python%i%i\scripts\pip install -U " % (sys.version_info.major, sys.version_info.minor)    
+    cmd = "C:\python%i%i\scripts\pip %s" % (sys.version_info.major, sys.version_info.minor, command)    
     this_cmd = "%s %s" % (cmd, dist_name)
     print(this_cmd)
     try:
@@ -104,17 +154,6 @@ def safeWindowsPip(dist_name):
             print('\tCalledProcessError! ')
             failed.append((dist_name, aCalledProcessError.cmd, aCalledProcessError.output, aCalledProcessError.returncode))
     return failed
-
-
-
-
-
-
-
-
-
-
-
 
     
 def linuxPip(dists):
@@ -164,11 +203,14 @@ def updatePip():
     badPackages = []
     threads = []
     dists = getInstalledPackages()
-    print('Got list of %i installed packages! Continue?' % len(dists))
-    if sys.version_info.major > 2:
-        input()
-    else:
-        raw_input()
+    print('Got list of %i installed packages! (Enter to continue, Ctrl-C to exit)' % len(dists))
+    try:
+        if sys.version_info.major > 2:
+            input()
+        else:
+            raw_input()
+    except KeyboardInterrupt:
+        sys.exit()
 ##
 ##    if 'linux' in sys.platform:
 ##        failed = linuxPip(dists)
@@ -195,8 +237,9 @@ def updatePip():
         if sys.version_info.major == 3 and sys.version_info.minor > 3:
             numCPUs = os.cpu_count()
         else:
+            print("you're using an out-of-date version of python! Please upgrade. I'll set the number of threads to 8, as I can't query the cpu_count")
             numCPUs = 8
-        [threads.append(installerThread(queueOfPackagesToUpdate, queueOfFailedPackages)) for _ in range(numCPUs)]    
+        [threads.append(installerThread(queueOfPackagesToUpdate, queueOfFailedPackages, "install -U")) for _ in range(numCPUs)]    
         for thread in threads:
             thread.start()
     except KeyboardInterrupt:
@@ -232,14 +275,24 @@ def _profile(continuation):
 
         
 def main():
-    parser = optparse.OptionParser("usage: %prog [options] target")
-    parser.add_option('--profile', action='store_true', dest='profile', default=False, help="for the hackers")
-    (values, args) = parser.parse_args()
-    if values.profile:
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--update', action='store_true', help="The main function of this program")
+    group.add_argument('--profile', action='store_true', help="for the hackers. Does not allow 'write-to-file' or 'read-from-file'.")
+    group.add_argument('--writeToFile', action='store_true', help="Writes the names of the installed packages to a file, to be run by this script under a NEWER version of python, whereby this script will attempt to install those packages.")
+    group.add_argument('--readFromFile', action='store_true', help="Installs packages written to a file by 'write-to-file'.")
+    args = parser.parse_args()
+
+    if args.profile:
         print("ready to profile...")
         _profile(updatePip)
     else:
-        updatePip()    
-            
+        if args.update:
+            updatePip()
+        elif args.writeToFile:
+            writePackagesToFile()
+        elif args.readFromFile:
+            readPackagesFromFile()
+    
 if __name__ == '__main__':
     main()

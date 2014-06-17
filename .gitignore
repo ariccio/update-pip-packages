@@ -34,3 +34,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+#Package-specific crap
+PackagesToInstallFromOlderVersionOfPython
+pip_update_known_troublemakers

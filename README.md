@@ -3,6 +3,8 @@ update-pip-packages
 
 Update all the packages (in alphabetical order) that you have installed globally with pip (i.e. with `sudo pip install`). Runs multiple instances of pip in parallel for faster updating. Yes, multithreaded pip upgrades - now your CPU is the bottleneck ;)
 
+Also, will install packages that are installed in an older version of python, IN a newer version of Python. Run this script in the older version with -writeToFile, and in the newer version with -readFromFile.
+
 I wrote this because pip won't get an upgrade-all option anytime soon, and this seems to work. It's NOT a true fix for the problem - in fact it's a dirty hack - but it's a nice stopgap measure!
 
 Enjoy multithreaded pip updates!
